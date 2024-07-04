@@ -21,7 +21,7 @@ def main():
   source = BeautifulSoup(driver.page_source, "html.parser")
   offers: ResultSet = source.find_all("a", class_="posting-list-item")
   for offer in offers:
-    print(offer.prettify())
+    print(offer.prettify()) 
   
 if __name__ == "__main__":
   main()
