@@ -1,3 +1,5 @@
 selenium
+requests
 beautifulsoup4
 webdriver-manager
+pandas
