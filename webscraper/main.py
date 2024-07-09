@@ -79,7 +79,7 @@ def main():
   offer_tags: ResultSet = source.find_all("a", class_="posting-list-item")
   offers_df: DataFrame = DataFrame([parse_offer(offer) for offer in offer_tags])
   csvPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/offers.csv")
-  offers_df.to_csv(csvPath, mode="a", index=False)
+  offers_df.to_csv(csvPath, mode='a', index=False)
 
   driver.quit()
   print(f"Script finished successfully at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
