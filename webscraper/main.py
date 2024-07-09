@@ -6,7 +6,8 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup, Tag, ResultSet, NavigableString
 from pandas import DataFrame
-import time
+import os
+from datetime import datetime
 
 def toInt(x: str) -> int | None:
   try:
@@ -23,7 +24,8 @@ def parse_offer(offer: Tag) -> dict:
 	  "company": parse_company(offer),
 	  "minimum_pay": pay_range[0],
 	  "maximum_pay": pay_range[1],
-    "check_salary_match": pay_range[2]
+    "check_salary_match": pay_range[2],
+    "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
   }
 
 def parse_title(offer: Tag) -> str:
@@ -48,6 +50,8 @@ def parse_company(offer: Tag) -> str:
 def parse_pay_range(offer: Tag) -> tuple[int | None, int | None, bool]:
   pay_range_container: Tag = offer.find("aside", class_="posting-info")
   pay_range_tag: NavigableString = pay_range_container.find("span")
+  if pay_range_tag is None:
+    return (None, None, False)
   pay_range: str = " ".join(pay_range_tag.text.strip().split())
   if pay_range == "Check Salary Match":
     return (None, None, True)
@@ -55,6 +59,8 @@ def parse_pay_range(offer: Tag) -> tuple[int | None, int | None, bool]:
   return (toInt("".join(pay_range_as_split[:2])), toInt("".join(pay_range_as_split[3:5])), False)
 
 def main():
+  print(f"Script started at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
+
   chrome_options = webdriver.ChromeOptions()
   chrome_options.add_argument("--headless")
   driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
@@ -72,8 +78,11 @@ def main():
   source = BeautifulSoup(driver.page_source, "html.parser")
   offer_tags: ResultSet = source.find_all("a", class_="posting-list-item")
   offers_df: DataFrame = DataFrame([parse_offer(offer) for offer in offer_tags])
-  print(offers_df)
-  print(offers_df["category"].value_counts())
+  csvPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/offers.csv")
+  offers_df.to_csv(csvPath, mode="a", index=False)
+
+  driver.quit()
+  print(f"Script finished successfully at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
 
 if __name__ == "__main__":
   main()
