@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup, Tag, ResultSet, NavigableString
 from pandas import DataFrame
 import os
 from datetime import datetime
+from sqlalchemy import create_engine
 
 def toInt(x: str) -> int | None:
   try:
@@ -80,6 +81,9 @@ def main():
   offers_df: DataFrame = DataFrame([parse_offer(offer) for offer in offer_tags])
   csvPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/offers.csv")
   offers_df.to_csv(csvPath, mode='a', index=False)
+
+  db_engine = create_engine("mysql+mysqldb://webscraper:webscraper@localhost:3306/jobless")
+  offers_df.to_sql("offers", con=db_engine, if_exists="append", index=False)
 
   driver.quit()
   print(f"Script finished successfully at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
