@@ -59,16 +59,15 @@ def parse_pay_range(offer: Tag) -> tuple[int | None, int | None, bool]:
   pay_range_as_split = pay_range.split()
   return (toInt("".join(pay_range_as_split[:2])), toInt("".join(pay_range_as_split[3:5])), False)
 
-def main():
-  print(f"Script started at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
-
+def webscrape_nofluffjobs(iter_number: int) -> list[dict]:
   chrome_options = webdriver.ChromeOptions()
   chrome_options.add_argument("--headless")
-  driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+  chrome_options.add_argument("--no-sandbox")
+  chrome_options.add_argument("--disable-dev-shm-usage")
+  driver = webdriver.Chrome(options=chrome_options)
   driver.get("https://nofluffjobs.com/pl/?lang=en")
 
-  #while True:
-  for _ in range(0, 20):
+  for _ in range(0, iter_number):
     try:
       more_offers_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[text()=' See more offers ']")))
       driver.execute_script("arguments[0].click();", more_offers_button)
@@ -78,14 +77,12 @@ def main():
 
   source = BeautifulSoup(driver.page_source, "html.parser")
   offer_tags: ResultSet = source.find_all("a", class_="posting-list-item")
-  offers_df: DataFrame = DataFrame([parse_offer(offer) for offer in offer_tags])
-  csvPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data/offers.csv")
-  offers_df.to_csv(csvPath, mode='a', index=False)
-
-  db_engine = create_engine("mysql+mysqldb://webscraper:webscraper@localhost:3306/jobless")
-  offers_df.to_sql("offers", con=db_engine, if_exists="append", index=False)
-
   driver.quit()
+  return [parse_offer(offer) for offer in offer_tags]
+
+def main():
+  print(f"Script started at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
+  print(webscrape_nofluffjobs(10))
   print(f"Script finished successfully at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
 
 if __name__ == "__main__":
